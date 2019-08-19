@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../widgets/app_drawer.dart';
+import './cart_screen.dart';
 import '../widgets/products_grid.dart';
+import '../widgets/badge.dart';
+import '../providers/cart.dart';
 
 enum FilterOptions {
   Favorites,
@@ -14,6 +19,7 @@ class ProductsOverviewScreen extends StatefulWidget {
 
 class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
   var _showOnlyFavorites = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,8 +56,25 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
               ),
             ],
           ),
+          Consumer<Cart>(
+            // Sets up a provider for cart and will only rebuild this area when updated, the badge area, however the ChildIcon area of the consumer will not rebuild since it's using the child: prop of consumner
+            builder: (_, cart, childIcon) => Badge(
+              child: childIcon,
+              value: cart.itemCount.toString(),
+            ),
+            child: IconButton(
+              // Since child is defined outside of builder function, it will not rebuild each time the value changed, since all we want is the badge to rebuild
+              icon: Icon(
+                Icons.shopping_cart,
+              ),
+              onPressed: () {
+                Navigator.of(context).pushNamed(CartScreen.routeName);
+              },
+            ),
+          ),
         ],
       ),
+      drawer: AppDrawer(),
       body: ProductsGrid(_showOnlyFavorites),
     );
   }

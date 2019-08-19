@@ -16,11 +16,41 @@ class ProductDetailScreen extends StatelessWidget {
     // Move as much logic as possible into the class. So we move the find product logic (firstWhere) into the class Products as a method.
     final loadedProduct = Provider.of<Products>(
       context,
-      listen: false, // listen false will NOT rebuild the widget each time when notifyListeners is called. Since this is a show page, you don't need to update.
+      listen:
+          false, // listen false will NOT rebuild the widget each time when notifyListeners is called. Since this is a show page, you don't need to update.
     ).findById(productId);
     return Scaffold(
       appBar: AppBar(
         title: Text(loadedProduct.title),
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: <Widget>[
+            Container(
+              height: 300,
+              width: double.infinity,
+              child: Image.network(loadedProduct.imageUrl, fit: BoxFit.cover),
+            ),
+            SizedBox(height: 10),
+            Text(
+              '\$${loadedProduct.price}',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 20,
+              ),
+            ),
+            SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              width: double.infinity,
+              child: Text(
+                loadedProduct.description,
+                textAlign: TextAlign.center,
+                softWrap: true,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
