@@ -28,6 +28,22 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
           'Shop',
         ),
         actions: <Widget>[
+          Consumer<Cart>(
+            // Sets up a provider for cart and will only rebuild this area when updated, the badge area, however the ChildIcon area of the consumer will not rebuild since it's using the child: prop of consumner
+            builder: (_, cart, childIcon) => Badge(
+              child: childIcon,
+              value: cart.itemCount.toString(),
+            ),
+            child: IconButton(
+              // Since child is defined outside of builder function, it will not rebuild each time the value changed, since all we want is the badge to rebuild
+              icon: Icon(
+                Icons.shopping_cart,
+              ),
+              onPressed: () {
+                Navigator.of(context).pushNamed(CartScreen.routeName);
+              },
+            ),
+          ),
           PopupMenuButton(
             onSelected: (FilterOptions selectedValue) {
               setState(() {
@@ -55,22 +71,6 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
                 value: FilterOptions.All,
               ),
             ],
-          ),
-          Consumer<Cart>(
-            // Sets up a provider for cart and will only rebuild this area when updated, the badge area, however the ChildIcon area of the consumer will not rebuild since it's using the child: prop of consumner
-            builder: (_, cart, childIcon) => Badge(
-              child: childIcon,
-              value: cart.itemCount.toString(),
-            ),
-            child: IconButton(
-              // Since child is defined outside of builder function, it will not rebuild each time the value changed, since all we want is the badge to rebuild
-              icon: Icon(
-                Icons.shopping_cart,
-              ),
-              onPressed: () {
-                Navigator.of(context).pushNamed(CartScreen.routeName);
-              },
-            ),
           ),
         ],
       ),

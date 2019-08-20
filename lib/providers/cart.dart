@@ -15,8 +15,8 @@ class CartItem {
 }
 
 class Cart with ChangeNotifier {
-  Map<String, CartItem>
-      _items = {}; // It's a map, due to multiple, and each has an ID, hence String, and then CartItem object
+  Map<String, CartItem> _items =
+      {}; // It's a map, due to multiple, and each has an ID, hence String, and then CartItem object
 
   // GEtter for items, returning a copy
   Map<String, CartItem> get items {
@@ -33,7 +33,7 @@ class Cart with ChangeNotifier {
     var total = 0.0;
     _items.forEach((key, cartItem) {
       total += cartItem.price * cartItem.quantity;
-    } );
+    });
     return total;
   }
 
@@ -65,15 +65,37 @@ class Cart with ChangeNotifier {
     }
     notifyListeners();
   }
+
   // Function to remove item from the items map
   void removeItem(String productId) {
     _items.remove(productId);
     notifyListeners();
   }
 
-  // When order is placed, we clear the cart 
+  // Remove single item, called in undo in snackbar
+  void removeSingleItem(String productId) {
+    if (!_items.containsKey(productId)) {
+      // Failsafe to make sure product is in cart
+      return;
+    }
+    if (_items[productId].quantity > 1) { // Removes one quantity to the cart if there was already more than one in there
+      _items.update(
+          productId,
+          (existingCartItem) => CartItem(
+                id: existingCartItem.id,
+                title: existingCartItem.title,
+                price: existingCartItem.price,
+                quantity: existingCartItem.quantity - 1,
+              ));
+    } else { // Removes entire product since just one is in there
+      _items.remove(productId);
+    }
+    notifyListeners();
+  }
+
+  // When order is placed, we clear the cart
   void emptyCart() {
     _items = {};
-    notifyListeners(); 
+    notifyListeners();
   }
 }

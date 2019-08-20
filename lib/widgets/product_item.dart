@@ -15,7 +15,7 @@ class ProductItem extends StatelessWidget {
     // Below is provided in Products_grid via the ChaangeNotifierProvider builder
     final product = Provider.of<Product>(context);
     final cart = Provider.of<Cart>(context, listen: false);
-    
+
     // An alternative to using the above provider is to use COnsumer widget which can wrap the areas of your widget tree that will change, so that way it won't rebuild the whole widget each time but just the area that does update, setting provider to listen false.
     // return Consumer<Product>(builder: ctx, product, child) => ClipRRect(ALL BELOW WIDGETS) Or just the section of widget that will update.
     return ClipRRect(
@@ -55,6 +55,23 @@ class ProductItem extends StatelessWidget {
             color: Theme.of(context).accentColor,
             onPressed: () {
               cart.addItem(product.id, product.price, product.title);
+              Scaffold.of(context).hideCurrentSnackBar(); // Removes the existing Snackbar to show the new one in its place
+              // Establishes a connection with nearest Scaffold widget. Cannot be used inside a Scaffold. IN this case, it goes to ProductsOverviewScreen
+              Scaffold.of(context).showSnackBar(
+                SnackBar(
+                  // Info modal at bottom of screen (flash)
+                  content: Text(
+                    'Added ${product.title} to cart!',
+                  ),
+                  duration: Duration(seconds: 4),
+                  action: SnackBarAction(    // WIdget that needs a label and onpressed, allows user input action
+                    label: 'UNDO',
+                    onPressed: () {
+                      cart.removeSingleItem(product.id);
+                    },
+                  ), 
+                ),
+              );
             },
           ),
         ),
