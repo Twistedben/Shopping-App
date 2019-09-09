@@ -1,4 +1,6 @@
+import 'dart:convert'; // Allows JSON conversion
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import './product.dart';
 
@@ -65,22 +67,39 @@ class Products with ChangeNotifier {
   //   notifyListeners();
   // }
 
-  void addProduct(Product product) {
-    final newProduct = Product(
-      title: product.title,
-      description: product.description,
-      price: product.price,
-      imageUrl: product.imageUrl,
-      id: DateTime.now().toString(),
-    );
-    _items.add(newProduct);
-    // _items.insert(0, newProduct); // To add to beginning of list
-    notifyListeners();
+  // We have this function return a future (now the whole http.post is returned) so we can then refer to it using then() in edit_product_screen to determine if we navigate and pop the screen
+  Future<void> addProduct(Product product) {
+    // Below uses Http package to send to firebase a new product, imported above using http package
+    const url =
+        'https://shop-app-a3c02.firebaseio.com/products.json'; // Firebase requires the /endpoint collection like products.json
+    return http.post(
+      url,
+      body: json.encode({
+        'title': product.title,
+        'description': product.description,
+        'price': product.price,
+        'imageUrl': product.imageUrl,
+        'isFavorite': product.isFavorite,
+      }), ).then((response) {
+        print(json.decode(response.body));
+        final newProduct = Product(
+            title: product.title,
+            description: product.description,
+            price: product.price,
+            imageUrl: product.imageUrl,
+            id: json.decode(response.body)['name'], // Stores the unique firebase ID as the product's id
+          );
+          _items.add(newProduct);
+          // _items.insert(0, newProduct); // To add to beginning of list
+          notifyListeners();
+      }); // Url and body which includes data, expected as json, converted by dart:convert package, using a Map
+    
   }
 
   void updateProduct(String id, Product newProduct) {
     final prodIndex = _items.indexWhere((prod) => prod.id == id);
-    if (prodIndex >= 0) { // Checks to make sure we aren't updating a product we don't have
+    if (prodIndex >= 0) {
+      // Checks to make sure we aren't updating a product we don't have
       _items[prodIndex] = newProduct;
       notifyListeners();
     } else {
@@ -89,9 +108,7 @@ class Products with ChangeNotifier {
   }
 
   void deleteProduct(String id) {
-    _items.removeWhere((prod) => prod.id == id); 
+    _items.removeWhere((prod) => prod.id == id);
     notifyListeners();
   }
-  
 }
-

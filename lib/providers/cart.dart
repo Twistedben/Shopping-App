@@ -15,8 +15,9 @@ class CartItem {
 }
 
 class Cart with ChangeNotifier {
-  Map<String, CartItem> _items =
-      {}; // It's a map, due to multiple, and each has an ID, hence String, and then CartItem object
+  Map<String, CartItem> _items = {
+    
+  }; // It's a map, due to multiple, and each has an ID, hence String, and then CartItem object
 
   // GEtter for items, returning a copy
   Map<String, CartItem> get items {
