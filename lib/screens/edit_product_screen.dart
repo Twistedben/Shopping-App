@@ -86,7 +86,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
   }
 
   // We use a global key since we need to interact with a widget inside our tree, set up above. Function triggers a save on every text field inside the form below.
-  void _saveForm() {
+  Future<void> _saveForm() async { 
+  //void _saveForm() { // Used doing then() and catchError()
     final isValid =
         _form.currentState.validate(); // Runs the validate: props on each input
     if (!isValid) {
@@ -107,17 +108,63 @@ class _EditProductScreenState extends State<EditProductScreen> {
         _isLoading = false;
       });
     } else {
-      Provider.of<Products>(context, listen: false)
-          .addProduct(_editedProduct)
-          .then((_) {
-        Navigator.of(context).pop();
+      try {
+        await Provider.of<Products>(context, listen: false) // No final result = here because addProduct returns nothing, so we don't need to store it in a variable 
+            .addProduct(_editedProduct);
+      } catch (error) {
+        await showDialog(           // Show a dialog box to indicate an error has occured saving the product and a button to exit screen. We do a return here to resolve the future so that it doesn't execute immediately and will navigator.pop when Okay is pressed, then moving onto then()
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text('An error occured!'),
+            content: Text('Something went wrong'),
+            actions: <Widget>[
+              FlatButton(
+                child: Text('Okay'),
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                },
+              )
+            ],
+          ),
+        );
+      } finally {   // Executes no matter what in a try and catch
         setState(() {
           // Sets _isLoading so indicator is not show
           _isLoading = false;
         });
-      }); // Adds the product. Is a Future declared in products.dart, since the future returns void, we just use _ to show we don't work with it. Now we'll navigate away only once the future resolves and product is added in firebase
+        Navigator.of(context).pop();
+      }
     }
   }
+      // Provider.of<Products>(context, listen: false) // No final result = here because addProduct returns nothing, so we don't need to store it in a variable 
+      //     .addProduct(_editedProduct)
+      //     .catchError((error) {
+      //   return showDialog(           // Show a dialog box to indicate an error has occured saving the product and a button to exit screen. We do a return here to resolve the future so that it doesn't execute immediately and will navigator.pop when Okay is pressed, then moving onto then()
+      //     context: context,
+      //     builder: (ctx) => AlertDialog(
+      //       title: Text('An error occured!'),
+      //       content: Text('Something went wrong'),
+      //       actions: <Widget>[
+      //         FlatButton(
+      //           child: Text('Okay'),
+      //           onPressed: () {
+      //             Navigator.of(ctx).pop();
+      //           },
+      //         )
+      //       ],
+      //     ),
+      //   );
+      // }) // Has the error thrown in products.dart. The then() future will still be executed since it comes after the catchError, and in this case, that's what we want, and it's executing due to the future being returned by the catchError()
+      //     .then((_) {
+      //   setState(() {
+      //     // Sets _isLoading so indicator is not show
+      //     _isLoading = false;
+      //   });
+      //   Navigator.of(context).pop();
+      // }); // Adds the product. Is a Future declared in products.dart, since the future returns void, we just use _ to show we don't work with it. Now we'll navigate away only once the future resolves and product is added in firebase
+    // }
+  // }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -132,173 +179,175 @@ class _EditProductScreenState extends State<EditProductScreen> {
           )
         ],
       ),
-      body: _isLoading // If _isLoading is true, show a circle progress indicator, otherwise show form
-          ? Center(
-              child: CircularProgressIndicator(),
-            )
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _form,
-                child: ListView(
-                  // Another option is for longer forms is singlechildscrollview and column:  child: SingleChildScrollView(child: Column(children: [ ... ],
-                  children: <Widget>[
-                    TextFormField(
-                      initialValue: _initValues['title'],
-                      decoration: InputDecoration(labelText: 'Title'),
-                      textInputAction: TextInputAction
-                          .next, // COntrols what bottom right button will be on keyboard. Next will move to next input instead of submitting form
-                      onFieldSubmitted: (value) {
-                        // Fires when the bnottom right button is pressed
-                        FocusScope.of(context).requestFocus(
-                            _priceFocusNode); // Tells it now to go to Price input when next is clicked
-                      },
-                      onSaved: (value) {
-                        _editedProduct = Product(
-                            id: _editedProduct.id,
-                            isFavorite: _editedProduct.isFavorite,
-                            title: value,
-                            price: _editedProduct.price,
-                            description: _editedProduct.description,
-                            imageUrl: _editedProduct.imageUrl);
-                      },
-                      validator: (value) {
-                        // Returning null means input is valid, returning String is error text
-                        if (value.isEmpty) {
-                          return "Please provide a title"; // Error message. In InputDecoration, the error props can be configured.
-                        }
-                        return null; // No error
-                      },
-                    ),
-                    TextFormField(
-                      initialValue: _initValues['price'],
-                      decoration: InputDecoration(labelText: 'Price'),
-                      textInputAction: TextInputAction.next,
-                      keyboardType: TextInputType.number,
-                      focusNode: _priceFocusNode,
-                      onFieldSubmitted: (value) {
-                        // Fires when the bnottom right button is pressed
-                        FocusScope.of(context).requestFocus(
-                            _descriptionFocusNode); // Tells it now to go to Price input when next is clicked
-                      },
-                      onSaved: (value) {
-                        _editedProduct = Product(
-                            id: _editedProduct.id,
-                            isFavorite: _editedProduct.isFavorite,
-                            title: _editedProduct.title,
-                            price: double.parse(value),
-                            description: _editedProduct.description,
-                            imageUrl: _editedProduct.imageUrl);
-                      },
-                      validator: (value) {
-                        // Returning null means input is valid, returning String is error text
-                        if (value.isEmpty) {
-                          return "Please enter a price"; // Error message. In InputDecoration, the error props can be configured.
-                        }
-                        if (double.tryParse(value) == null) {
-                          return "Please enter a valid number";
-                        }
-                        if (double.parse(value) <= 0) {
-                          return "Please enter a price greater than 0";
-                        }
-                        return null; // No error
-                      },
-                    ),
-                    TextFormField(
-                      initialValue: _initValues['description'],
-                      decoration: InputDecoration(labelText: 'Description'),
-                      maxLines:
-                          3, // How many lines rendered on screen, bigger text field
-                      keyboardType: TextInputType
-                          .multiline, // Allows enter symbol on keyboard for new paragrapgh
-                      focusNode: _descriptionFocusNode,
-                      onSaved: (value) {
-                        _editedProduct = Product(
-                            id: _editedProduct.id,
-                            isFavorite: _editedProduct.isFavorite,
-                            title: _editedProduct.title,
-                            price: _editedProduct.price,
-                            description: value,
-                            imageUrl: _editedProduct.imageUrl);
-                      },
-                      validator: (value) {
-                        // Returning null means input is valid, returning String is error text
-                        if (value.isEmpty) {
-                          return "Please enter a description"; // Error message. In InputDecoration, the error props can be configured.
-                        }
-                        if (value.length < 10) {
-                          return "Description minimum characters is 10"; // Error message. In InputDecoration, the error props can be configured.
-                        }
-                        return null; // No error
-                      },
-                    ),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+      body:
+          _isLoading // If _isLoading is true, show a circle progress indicator, otherwise show form
+              ? Center(
+                  child: CircularProgressIndicator(),
+                )
+              : Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Form(
+                    key: _form,
+                    child: ListView(
+                      // Another option is for longer forms is singlechildscrollview and column:  child: SingleChildScrollView(child: Column(children: [ ... ],
                       children: <Widget>[
-                        Container(
-                          width: 100,
-                          height: 100,
-                          margin: const EdgeInsets.only(top: 8, right: 10),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              width: 1,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          child: _imageUrlController.text.isEmpty
-                              ? Text('Enter Image URL')
-                              : FittedBox(
-                                  child: Image.network(
-                                    _imageUrlController.text,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
+                        TextFormField(
+                          initialValue: _initValues['title'],
+                          decoration: InputDecoration(labelText: 'Title'),
+                          textInputAction: TextInputAction
+                              .next, // COntrols what bottom right button will be on keyboard. Next will move to next input instead of submitting form
+                          onFieldSubmitted: (value) {
+                            // Fires when the bnottom right button is pressed
+                            FocusScope.of(context).requestFocus(
+                                _priceFocusNode); // Tells it now to go to Price input when next is clicked
+                          },
+                          onSaved: (value) {
+                            _editedProduct = Product(
+                                id: _editedProduct.id,
+                                isFavorite: _editedProduct.isFavorite,
+                                title: value,
+                                price: _editedProduct.price,
+                                description: _editedProduct.description,
+                                imageUrl: _editedProduct.imageUrl);
+                          },
+                          validator: (value) {
+                            // Returning null means input is valid, returning String is error text
+                            if (value.isEmpty) {
+                              return "Please provide a title"; // Error message. In InputDecoration, the error props can be configured.
+                            }
+                            return null; // No error
+                          },
                         ),
-                        Expanded(
-                          child: TextFormField(
-                            // initialValue: _initValues['imageUrl'], Since we use a controller, cannot use initial value, instead set the _imageController = to the existing
-                            decoration: InputDecoration(labelText: 'Image Url'),
-                            keyboardType: TextInputType.url,
-                            textInputAction: TextInputAction.done,
-                            controller:
-                                _imageUrlController, // We want the value before form is submitted so we use a controller
-                            focusNode: _imageUrlFocusNode,
-                            onSaved: (value) {
-                              _editedProduct = Product(
-                                  id: _editedProduct.id,
-                                  isFavorite: _editedProduct.isFavorite,
-                                  title: _editedProduct.title,
-                                  price: _editedProduct.price,
-                                  description: _editedProduct.description,
-                                  imageUrl: value);
-                            },
-                            onFieldSubmitted: (_) {
-                              _saveForm();
-                            },
-                            validator: (value) {
-                              // Returning null means input is valid, returning String is error text
-                              if (value.isEmpty) {
-                                return "Please enter a URL to an image"; // Error message. In InputDecoration, the error props can be configured.
-                              }
-                              if (!value.startsWith('http') &&
-                                  !value.startsWith('https')) {
-                                return "Please enter a valid URL to an image"; // Error message. In InputDecoration, the error props can be configured.
-                              }
-                              if (!value.endsWith('.png') &&
-                                  !value.endsWith('.jpg') &&
-                                  !value.endsWith('.jpeg')) {
-                                return "Please enter an image URL to a .jpg, .png, or .jpeg"; // Error message. In InputDecoration, the error props can be configured.
-                              }
-                              return null; // No error
-                            },
-                          ),
+                        TextFormField(
+                          initialValue: _initValues['price'],
+                          decoration: InputDecoration(labelText: 'Price'),
+                          textInputAction: TextInputAction.next,
+                          keyboardType: TextInputType.number,
+                          focusNode: _priceFocusNode,
+                          onFieldSubmitted: (value) {
+                            // Fires when the bnottom right button is pressed
+                            FocusScope.of(context).requestFocus(
+                                _descriptionFocusNode); // Tells it now to go to Price input when next is clicked
+                          },
+                          onSaved: (value) {
+                            _editedProduct = Product(
+                                id: _editedProduct.id,
+                                isFavorite: _editedProduct.isFavorite,
+                                title: _editedProduct.title,
+                                price: double.parse(value),
+                                description: _editedProduct.description,
+                                imageUrl: _editedProduct.imageUrl);
+                          },
+                          validator: (value) {
+                            // Returning null means input is valid, returning String is error text
+                            if (value.isEmpty) {
+                              return "Please enter a price"; // Error message. In InputDecoration, the error props can be configured.
+                            }
+                            if (double.tryParse(value) == null) {
+                              return "Please enter a valid number";
+                            }
+                            if (double.parse(value) <= 0) {
+                              return "Please enter a price greater than 0";
+                            }
+                            return null; // No error
+                          },
+                        ),
+                        TextFormField(
+                          initialValue: _initValues['description'],
+                          decoration: InputDecoration(labelText: 'Description'),
+                          maxLines:
+                              3, // How many lines rendered on screen, bigger text field
+                          keyboardType: TextInputType
+                              .multiline, // Allows enter symbol on keyboard for new paragrapgh
+                          focusNode: _descriptionFocusNode,
+                          onSaved: (value) {
+                            _editedProduct = Product(
+                                id: _editedProduct.id,
+                                isFavorite: _editedProduct.isFavorite,
+                                title: _editedProduct.title,
+                                price: _editedProduct.price,
+                                description: value,
+                                imageUrl: _editedProduct.imageUrl);
+                          },
+                          validator: (value) {
+                            // Returning null means input is valid, returning String is error text
+                            if (value.isEmpty) {
+                              return "Please enter a description"; // Error message. In InputDecoration, the error props can be configured.
+                            }
+                            if (value.length < 10) {
+                              return "Description minimum characters is 10"; // Error message. In InputDecoration, the error props can be configured.
+                            }
+                            return null; // No error
+                          },
+                        ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: <Widget>[
+                            Container(
+                              width: 100,
+                              height: 100,
+                              margin: const EdgeInsets.only(top: 8, right: 10),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  width: 1,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              child: _imageUrlController.text.isEmpty
+                                  ? Text('Enter Image URL')
+                                  : FittedBox(
+                                      child: Image.network(
+                                        _imageUrlController.text,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                            ),
+                            Expanded(
+                              child: TextFormField(
+                                // initialValue: _initValues['imageUrl'], Since we use a controller, cannot use initial value, instead set the _imageController = to the existing
+                                decoration:
+                                    InputDecoration(labelText: 'Image Url'),
+                                keyboardType: TextInputType.url,
+                                textInputAction: TextInputAction.done,
+                                controller:
+                                    _imageUrlController, // We want the value before form is submitted so we use a controller
+                                focusNode: _imageUrlFocusNode,
+                                onSaved: (value) {
+                                  _editedProduct = Product(
+                                      id: _editedProduct.id,
+                                      isFavorite: _editedProduct.isFavorite,
+                                      title: _editedProduct.title,
+                                      price: _editedProduct.price,
+                                      description: _editedProduct.description,
+                                      imageUrl: value);
+                                },
+                                onFieldSubmitted: (_) {
+                                  _saveForm();
+                                },
+                                validator: (value) {
+                                  // Returning null means input is valid, returning String is error text
+                                  if (value.isEmpty) {
+                                    return "Please enter a URL to an image"; // Error message. In InputDecoration, the error props can be configured.
+                                  }
+                                  if (!value.startsWith('http') &&
+                                      !value.startsWith('https')) {
+                                    return "Please enter a valid URL to an image"; // Error message. In InputDecoration, the error props can be configured.
+                                  }
+                                  if (!value.endsWith('.png') &&
+                                      !value.endsWith('.jpg') &&
+                                      !value.endsWith('.jpeg')) {
+                                    return "Please enter an image URL to a .jpg, .png, or .jpeg"; // Error message. In InputDecoration, the error props can be configured.
+                                  }
+                                  return null; // No error
+                                },
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
     );
   }
 }

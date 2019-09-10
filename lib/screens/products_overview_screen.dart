@@ -6,6 +6,7 @@ import './cart_screen.dart';
 import '../widgets/products_grid.dart';
 import '../widgets/badge.dart';
 import '../providers/cart.dart';
+import '../providers/products.dart';
 
 enum FilterOptions {
   Favorites,
@@ -19,6 +20,40 @@ class ProductsOverviewScreen extends StatefulWidget {
 
 class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
   var _showOnlyFavorites = false;
+  var _isInit = true;
+  var _isLoading = false;
+  // To fetch data here to display the list from firebase, initState() would be acceptable to use, the downside is too much logic inside the widget
+    // So instead we move the logic to the products class, products.dart, so that way we just call a method inside initstate to keep it lean. Below
+  @override
+  void initState() {
+    super.initState();
+    // Approach 1, if listen: false was set.
+      // Provider.of<Products>(context).fetchAndSetProducts(); // Wont Work here. Would if listen: false was set, then we could use of(context) inside initState()
+    // Approach 2:
+      // Future.delayed(Duration.zero).then((_) {
+      //   Provider.of<Products>(context).fetchAndSetProducts();
+      // });
+    // Approach 3:
+      // Use didChangeDependencies instead of initState()
+  }
+
+  // Here we use didChange to fetch the products from Firebase. The difference from initState() is this will run multiple times on a widget. Which is why we use _isInit helper to make sure it runs only when needed, at first
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_isInit) {
+      setState(() {
+        _isLoading = true;
+      });
+      Provider.of<Products>(context).fetchAndSetProducts().then((_) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      );
+    }
+    _isInit = false;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +110,7 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
         ],
       ),
       drawer: AppDrawer(),
-      body: ProductsGrid(_showOnlyFavorites),
+      body: _isLoading ? Center(child: CircularProgressIndicator(),) : ProductsGrid(_showOnlyFavorites),
     );
   }
 }
