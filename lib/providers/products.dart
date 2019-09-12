@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import './product.dart';
+import '../models/http_exception.dart';
 
 // Mixins must be added to providers
 class Products with ChangeNotifier {
@@ -74,8 +75,11 @@ class Products with ChangeNotifier {
       final response = await http.get(url);
       // print(json.decode(response.body)); // Good way to see how the mapped data is retrieved and how we can extract and digest that data
       final fetchedData = json.decode(response.body) as Map<String, dynamic>; // Says we have a Map coming in where the keys are strings and values are dynamic (The values are also Maps but declaring that would give us a error)
-      // FOr each entry in the map, we'll execute a function 
+      if (fetchedData == null) {    // If there are no products on server, break out and return nothing.
+        return; 
+      }
       final List<Product> loadedProducts = [];
+      // FOr each entry in the map, we'll execute a function 
       fetchedData.forEach((prodId, prodData) { // We need convert the data into product objects based on our Product class, since we need product from items
         loadedProducts.add(Product(
           id: prodId,
@@ -146,10 +150,17 @@ class Products with ChangeNotifier {
     
   }
 
-  void updateProduct(String id, Product newProduct) {
+  Future<void> updateProduct(String id, Product newProduct) async {
     final prodIndex = _items.indexWhere((prod) => prod.id == id);
     if (prodIndex >= 0) {
-      // Checks to make sure we aren't updating a product we don't have
+      final url = 'https://shop-app-a3c02.firebaseio.com/products/$id.json'; // Here we use to get the id for the specific product and provide it for the url endpoint. We have to use final instead of const since it'll only be final at runtime and not compilation time
+      await http.patch(url, body: json.encode({
+        'title': newProduct.title,
+        'description': newProduct.description,
+        'imageUrl': newProduct.imageUrl,
+        'price': newProduct.price,
+      }));
+     // Checks to make sure we aren't updating a product we don't have
       _items[prodIndex] = newProduct;
       notifyListeners();
     } else {
@@ -157,8 +168,22 @@ class Products with ChangeNotifier {
     }
   }
 
-  void deleteProduct(String id) {
-    _items.removeWhere((prod) => prod.id == id);
+  // Below we utilize optimistic updating.
+  Future<void> deleteProduct(String id) async {
+    final url = 'https://shop-app-a3c02.firebaseio.com/products/$id.json'; // Here we use to get the id for the specific product and provide it for the url endpoint. We have to use final instead of const since it'll only be final at runtime and not compilation time
+    final existingProductIndex = _items.indexWhere((prod) => prod.id == id); // Finds the deleting products index.
+    var existingProduct = _items[existingProductIndex];                   // Uses the index to find the deleting product.
+    _items.removeAt(existingProductIndex);  // Removes the deleting item from the list, but not in memory
     notifyListeners();
+    final response = await http.delete(url);
+    // Below ensures that the http request succeeds before removing it from in memory, and if it fails, then readds it to the list.
+    // Below we build our own error to ensure that if there's an error, we can handle it. Goes to models/http_exception.dart
+    if (response.statusCode >= 400) {
+      _items.insert(existingProductIndex, existingProduct); // If for some reason removal fails, then we can readd that deleted item back into the list.
+      notifyListeners(); 
+      throw HttpException('Could not delete product.'); 
+    } 
+    existingProduct = null;   // It was deleted in firebase, so delete it in memory, too.
+    // _items.removeWhere((prod) => prod.id == id);
   }
 }

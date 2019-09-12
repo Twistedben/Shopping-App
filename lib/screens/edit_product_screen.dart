@@ -101,12 +101,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
     });
     if (_editedProduct.id != null) {
       // Checks if existing product being edited so a new entry is'n't created, instead updates one
-      Provider.of<Products>(context, listen: false)
+      await Provider.of<Products>(context, listen: false)
           .updateProduct(_editedProduct.id, _editedProduct); // Adds the product
-      setState(() {
-        // Sets _isLoading so indicator is not show
-        _isLoading = false;
-      });
     } else {
       try {
         await Provider.of<Products>(context, listen: false) // No final result = here because addProduct returns nothing, so we don't need to store it in a variable 
@@ -127,14 +123,21 @@ class _EditProductScreenState extends State<EditProductScreen> {
             ],
           ),
         );
-      } finally {   // Executes no matter what in a try and catch
-        setState(() {
-          // Sets _isLoading so indicator is not show
-          _isLoading = false;
-        });
-        Navigator.of(context).pop();
       }
+      // finally {   // Executes no matter what in a try and catch
+      //   setState(() {
+      //     // Sets _isLoading so indicator is not show
+      //     _isLoading = false;
+      //   });
+      //   Navigator.of(context).pop();
+      // }
     }
+          // Set state and pop will run after the awaits above
+      setState(() {
+        // Sets _isLoading so indicator is not show
+        _isLoading = false;
+      });
+      Navigator.of(context).pop();
   }
       // Provider.of<Products>(context, listen: false) // No final result = here because addProduct returns nothing, so we don't need to store it in a variable 
       //     .addProduct(_editedProduct)
