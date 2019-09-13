@@ -29,7 +29,7 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
     super.initState();
     // Approach 1, if listen: false was set.
       // Provider.of<Products>(context).fetchAndSetProducts(); // Wont Work here. Would if listen: false was set, then we could use of(context) inside initState()
-    // Approach 2:
+    // Approach 2: See orders_screen to see this in action.
       // Future.delayed(Duration.zero).then((_) {
       //   Provider.of<Products>(context).fetchAndSetProducts();
       // });
