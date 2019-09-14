@@ -36,7 +36,7 @@ class OrdersScreen extends StatelessWidget {
     //     _isLoading = false;
     //   });  
     // });
-  // Approach 3: FutureBuillding below in body: 
+  // Approach 3: FutureBuillding below in body: BEST APPROACH for performance and leanness
     // There we don't use initstate or set state with a prop like isLoading, instead check if the future resolved and dictate which is shown dependent on status of future.
     // This also allows us to use a Stateless widget instead of Stateful just to use initState
   // }
