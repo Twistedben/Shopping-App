@@ -31,7 +31,7 @@ class UserProductsScreen extends StatelessWidget {
       ),
       drawer: AppDrawer(),
       // Refresh Indicator allows the drag down / pull to refresh on the screen. Onrefresh is required and returns a future to know when done fetching data
-      body: RefreshIndicator( 
+      body: RefreshIndicator(
         onRefresh: () => _refreshProducts(context),
         child: Padding(
           padding: const EdgeInsets.all(8),

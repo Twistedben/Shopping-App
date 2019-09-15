@@ -14,6 +14,7 @@ enum FilterOptions {
 }
 
 class ProductsOverviewScreen extends StatefulWidget {
+  static const routeName = '/home';
   @override
   _ProductsOverviewScreenState createState() => _ProductsOverviewScreenState();
 }
@@ -23,18 +24,18 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
   var _isInit = true;
   var _isLoading = false;
   // To fetch data here to display the list from firebase, initState() would be acceptable to use, the downside is too much logic inside the widget
-    // So instead we move the logic to the products class, products.dart, so that way we just call a method inside initstate to keep it lean. Below
+  // So instead we move the logic to the products class, products.dart, so that way we just call a method inside initstate to keep it lean. Below
   @override
   void initState() {
     super.initState();
     // Approach 1, if listen: false was set.
-      // Provider.of<Products>(context).fetchAndSetProducts(); // Wont Work here. Would if listen: false was set, then we could use of(context) inside initState()
+    // Provider.of<Products>(context).fetchAndSetProducts(); // Wont Work here. Would if listen: false was set, then we could use of(context) inside initState()
     // Approach 2: See orders_screen to see this in action.
-      // Future.delayed(Duration.zero).then((_) {
-      //   Provider.of<Products>(context).fetchAndSetProducts();
-      // });
+    // Future.delayed(Duration.zero).then((_) {
+    //   Provider.of<Products>(context).fetchAndSetProducts();
+    // });
     // Approach 3:
-      // Use didChangeDependencies instead of initState()
+    // Use didChangeDependencies instead of initState()
   }
 
   // Here we use didChange to fetch the products from Firebase. The difference from initState() is this will run multiple times on a widget. Which is why we use _isInit helper to make sure it runs only when needed, at first
@@ -49,8 +50,7 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
         setState(() {
           _isLoading = false;
         });
-      }
-      );
+      });
     }
     _isInit = false;
   }
@@ -110,7 +110,11 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
         ],
       ),
       drawer: AppDrawer(),
-      body: _isLoading ? Center(child: CircularProgressIndicator(),) : ProductsGrid(_showOnlyFavorites),
+      body: _isLoading
+          ? Center(
+              child: CircularProgressIndicator(),
+            )
+          : ProductsGrid(_showOnlyFavorites),
     );
   }
 }

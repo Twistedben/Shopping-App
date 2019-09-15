@@ -19,9 +19,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // An alternative syntax to using value, you can use a builder instead, seen below commented out. The difference is for value, use it on a list or grid. You make sure the provider works even if data changes for the widget, for builder it doesn't. Providing data on single list or grid items, .value is better. :
-    // return ChangeNotifierProvider.(builder: (_) => Products(), ) 
+    // return ChangeNotifierProvider.(builder: (_) => Products(), )
     // builder: (_) => Products(), // provides an instance of this class to all child widgets, so they can listen and be rebuilt
-    return MultiProvider(   // MultiProvider allows multiple providers to be added, like Products and Cart in this case
+    return MultiProvider(
+      // MultiProvider allows multiple providers to be added, like Products and Cart in this case
       providers: [
         ChangeNotifierProvider.value(
           value: Auth(),
@@ -46,7 +47,7 @@ class MyApp extends StatelessWidget {
         home: AuthScreen(),
         routes: {
           ProductDetailScreen.routeName: (ctx) => ProductDetailScreen(),
-          // AuthScreen.routeName: (ctx) => AuthScreen(),
+          ProductsOverviewScreen.routeName: (ctx) => ProductsOverviewScreen(),
           CartScreen.routeName: (ctx) => CartScreen(),
           OrdersScreen.routeName: (ctx) => OrdersScreen(),
           UserProductsScreen.routeName: (ctx) => UserProductsScreen(),
