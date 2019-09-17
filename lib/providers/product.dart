@@ -7,7 +7,7 @@ class Product with ChangeNotifier {
   final String id;
   final String title;
   final String description;
-  final double price; 
+  final double price;
   final String imageUrl;
   bool isFavorite;
 
@@ -26,19 +26,22 @@ class Product with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> toggleFavorite() async {
+  // WE pass in the token from product_item.dart calling of the method and expect the auth token here
+  Future<void> toggleFavorite(String authToken, String userId) async {
     final oldStatus = isFavorite;
     isFavorite = !isFavorite; // If true, then false, if false then set true
-    notifyListeners(); // Equivalent to setState in stateful widgets, let's providers know the object's state has changed. 
-    final url = 'https://shop-app-a3c02.firebaseio.com/products/$id.json'; 
+    notifyListeners(); // Equivalent to setState in stateful widgets, let's providers know the object's state has changed.
+    final url =
+        'https://shop-app-a3c02.firebaseio.com/userFavorites/$userId/$id.json?auth=$authToken';
     try {
-      final response = await http.patch(url, body: json.encode({
-        'isFavorite': isFavorite,
-       })
-      );
-    if (response.statusCode >= 400) {// Checks if there's an error since only get and Post throw exceptions
-      _setFavValue(oldStatus);
-    }
+      final response = await http.put(url,
+          body: json.encode(
+            isFavorite,
+          ));
+      if (response.statusCode >= 400) {
+        // Checks if there's an error since only get and Post throw exceptions
+        _setFavValue(oldStatus);
+      }
     } catch (error) {
       _setFavValue(oldStatus);
     }

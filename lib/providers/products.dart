@@ -43,9 +43,10 @@ class Products with ChangeNotifier {
   ];
   // var _showFavoritesOnly = false;
   final String authToken;
+  final String userId;
 
-  // We add in this._items to ensure we don't lose the previous list of products
-  Products(this.authToken, this._items);
+// We add in this._items to ensure we don't lose the previous list of products
+  Products(this.authToken, this.userId, this._items);
 
   // A getter to return only favorited items
   List<Product> get favoriteItems {
@@ -73,10 +74,15 @@ class Products with ChangeNotifier {
   //   notifyListeners();
   // }
 
-  // Below - We have a future that fetches the products added from firebase. We call this inside products_overview_screen initstate()
-  Future<void> fetchAndSetProducts() async {
-    final url =
-        'https://shop-app-a3c02.firebaseio.com/products.json?auth=$authToken';
+  // Below - We have a future that fetches the products added from firebase. Inside firebase we now need to add a rule for products useing indexOf and userId. We call this inside products_overview_screen initstate()
+  // Square brackets in the parameters allow an optional argument, but then a default value should be assigned.
+  Future<void> fetchAndSetProducts([bool filterByUser = false]) async {
+    // Below - We set this to true on the user_products_screen so that the products listed are filtered by user owned / created products, otherwise on the show all products screen, filterByUser is set to false by defualt so it will show all products.
+    final filterString =
+        filterByUser ? 'orderBy="userId"&equalTo="$userId"' : '';
+    // Below - filter by user owned products. We use the & to chain more query logic to filter the query on the server side so we only fetch the products that match and belong to the user via userId
+    var url =
+        'https://shop-app-a3c02.firebaseio.com/products.json?auth=$authToken&$filterString';
     try {
       final response = await http.get(url);
       // print(json.decode(response.body)); // Good way to see how the mapped data is retrieved and how we can extract and digest that data
@@ -86,6 +92,12 @@ class Products with ChangeNotifier {
         // If there are no products on server, break out and return nothing.
         return;
       }
+      // Begin - handle favorites
+      url =
+          'https://shop-app-a3c02.firebaseio.com/userFavorites/$userId.json?auth=$authToken';
+      final favoriteResponse = await http.get(url);
+      final favoriteData = json.decode((favoriteResponse.body));
+      // End - handle favorites
       final List<Product> loadedProducts = [];
       // FOr each entry in the map, we'll execute a function
       fetchedData.forEach((prodId, prodData) {
@@ -95,7 +107,9 @@ class Products with ChangeNotifier {
           title: prodData['title'],
           description: prodData['description'],
           price: prodData['price'],
-          isFavorite: prodData['isFavorite'],
+          // The double ?? checks if the previous object's value is null, if so then it goes to the next value after the ??
+          isFavorite:
+              favoriteData == null ? false : favoriteData[prodId] ?? false,
           imageUrl: prodData['imageUrl'],
         ));
       });
@@ -112,8 +126,8 @@ class Products with ChangeNotifier {
     // Using async keyword here, will wrap the whole function into a future, returning one, so return keyword is not needed. You can use this on any code you think might fails
     //Future<void> addProduct(Product product) { // Using non-async will require a return keyword preceeding the http instead of await
     // Below uses Http package to send to firebase a new product, imported above using http package
-    const url =
-        'https://shop-app-a3c02.firebaseio.com/products.json'; // Firebase requires the /endpoint collection like products.json
+    final url =
+        'https://shop-app-a3c02.firebaseio.com/products.json?auth=$authToken'; // Firebase requires the /endpoint collection like products.json
     try {
       // needed with async, is like then()
       final response =
@@ -127,7 +141,7 @@ class Products with ChangeNotifier {
           'description': product.description,
           'price': product.price,
           'imageUrl': product.imageUrl,
-          'isFavorite': product.isFavorite,
+          'userId': userId,
         }),
       );
       final newProduct = Product(
@@ -168,7 +182,7 @@ class Products with ChangeNotifier {
     final prodIndex = _items.indexWhere((prod) => prod.id == id);
     if (prodIndex >= 0) {
       final url =
-          'https://shop-app-a3c02.firebaseio.com/products/$id.json'; // Here we use to get the id for the specific product and provide it for the url endpoint. We have to use final instead of const since it'll only be final at runtime and not compilation time
+          'https://shop-app-a3c02.firebaseio.com/products/$id.json?auth=$authToken'; // Here we use to get the id for the specific product and provide it for the url endpoint. We have to use final instead of const since it'll only be final at runtime and not compilation time
       await http.patch(url,
           body: json.encode({
             'title': newProduct.title,
@@ -187,7 +201,7 @@ class Products with ChangeNotifier {
   // Below we utilize optimistic updating.
   Future<void> deleteProduct(String id) async {
     final url =
-        'https://shop-app-a3c02.firebaseio.com/products/$id.json'; // Here we use to get the id for the specific product and provide it for the url endpoint. We have to use final instead of const since it'll only be final at runtime and not compilation time
+        'https://shop-app-a3c02.firebaseio.com/products/$id.json?auth=$authToken'; // Here we use to get the id for the specific product and provide it for the url endpoint. We have to use final instead of const since it'll only be final at runtime and not compilation time
     final existingProductIndex = _items.indexWhere(
         (prod) => prod.id == id); // Finds the deleting products index.
     var existingProduct = _items[

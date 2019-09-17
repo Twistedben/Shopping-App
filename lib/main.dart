@@ -31,14 +31,21 @@ class MyApp extends StatelessWidget {
         // and in that builder has a dynamic value that relies on a previous provider (in this case, auth). So now that builder and class has access to auth as that dynamic value, so we can use it.
         // Now this will be rebuilt when auth changes. The third argument in the builder is the previous State of Products
         ChangeNotifierProxyProvider<Auth, Products>(
-          builder: (ctx, auth, previousProducts) => Products(auth.token,
-              previousProducts == null ? [] : previousProducts.items),
+          builder: (ctx, auth, previousProducts) => Products(
+            auth.token,
+            auth.userId,
+            previousProducts == null ? [] : previousProducts.items,
+          ),
         ),
         ChangeNotifierProvider.value(
           value: Cart(),
         ),
-        ChangeNotifierProvider.value(
-          value: Orders(),
+        ChangeNotifierProxyProvider<Auth, Orders>(
+          builder: (ctx, auth, previousOrders) => Orders(
+            auth.token,
+            auth.userId,
+            previousOrders == null ? [] : previousOrders.orders,
+          ),
         ),
       ],
       // Below - Use Consumer of auth to rebuild this materialApp tree when authentication happens. So when notifyListens is called, this is triggered.
