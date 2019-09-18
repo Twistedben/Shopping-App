@@ -94,7 +94,8 @@ class AuthCard extends StatefulWidget {
   _AuthCardState createState() => _AuthCardState();
 }
 
-class _AuthCardState extends State<AuthCard> {
+class _AuthCardState extends State<AuthCard>
+    with SingleTickerProviderStateMixin {
   final GlobalKey<FormState> _formKey = GlobalKey();
   AuthMode _authMode = AuthMode.Login;
   Map<String, String> _authData = {
@@ -103,6 +104,34 @@ class _AuthCardState extends State<AuthCard> {
   };
   var _isLoading = false;
   final _passwordController = TextEditingController();
+  // These two should be configured in initstate
+  AnimationController _controller;
+  Animation<Size>
+      _heightAnimation; // Since Animation is dynamic, we have to provide what we intend to animate and in this case it's the height so we put size
+
+  // Configures animation by assigning values to the two variables above
+  @override
+  void initState() {
+    super.initState();
+    // For AnimationController to work, we have to add a mixin to the class above, using with SingleTickerProviderStateMixin
+    // It adds some methods to the State class and let's the widget know when a frame update is due for animations to play smoothly
+    _controller =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 300));
+    // Tween stores the beginning and end of two values, the information behind the animation. Then we call .animate on it
+    _heightAnimation = Tween<Size>(
+            begin: Size(double.infinity, 260), end: Size(double.infinity, 320))
+        .animate(
+            CurvedAnimation(parent: _controller, curve: Curves.fastOutSlowIn));
+    // We need to set a listener to call set state. Here we just want to rerun the build method so animation is played. We should also dispose of this listener by using dispose below.
+    // _heightAnimation.addListener(() => setState(() {}));
+  }
+
+  // // Cleans the listener from contreoller
+  // @override
+  // void dispose() {
+  //   super.dispose();
+  //   _controller.dispose();
+  // }
 
   void _showErrorDialog(String message) {
     showDialog(
@@ -175,10 +204,14 @@ class _AuthCardState extends State<AuthCard> {
       setState(() {
         _authMode = AuthMode.Signup;
       });
+      // Fire the animation. .forward() starts the animation
+      _controller.forward();
     } else {
       setState(() {
         _authMode = AuthMode.Login;
       });
+      // Reverse the animation back.
+      _controller.reverse();
     }
   }
 
@@ -190,12 +223,21 @@ class _AuthCardState extends State<AuthCard> {
         borderRadius: BorderRadius.circular(10.0),
       ),
       elevation: 8.0,
-      child: Container(
-        height: _authMode == AuthMode.Signup ? 320 : 260,
-        constraints:
-            BoxConstraints(minHeight: _authMode == AuthMode.Signup ? 320 : 260),
-        width: deviceSize.width * 0.75,
-        padding: EdgeInsets.all(16.0),
+      // Below we use the animation widget, builkder to tell it what to rebuild
+      child: AnimatedBuilder(
+        animation: _heightAnimation,
+        builder: (ctx, childWidget) => Container(
+            // height: _authMode == AuthMode.Signup ? 320 : 260,
+            height: _heightAnimation.value.height,
+            constraints:
+                // BoxConstraints(minHeight: _authMode == AuthMode.Signup ? 320 : 260),
+                BoxConstraints(
+              minHeight: _heightAnimation.value.height,
+            ),
+            width: deviceSize.width * 0.75,
+            padding: EdgeInsets.all(16.0),
+            child:
+                childWidget), // Child of the AnimatedBUilder that WONT rebuild each animation, unlike the Container() above
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
