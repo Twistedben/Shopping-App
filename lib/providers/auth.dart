@@ -56,13 +56,46 @@ class Auth with ChangeNotifier {
           .add(Duration(seconds: int.parse(responseData['expiresIn'])));
       _autoLogout();
       notifyListeners(); // Tells consumer in main.dart to rebuild the materialapp
+      // Begin - Shared Preferences - Local Data storage
       // Store log in data using shared_prefernces. Imported above. Shared Preferences works with futures and needs async
       final prefs = await SharedPreferences.getInstance();
-      // set is used to write data. To store more complex data like a map, you could do "json.encode({})"
-      prefs.setString(key, value);
+      // We convert the data into a JSON Map (which is a string so can be set using setString on share_pref) to store using setString for Shared_prefernces
+      final userData = json.encode({
+        'token': _token,
+        'userId': _userId,
+        'expiryDate': _expiryDate.toIso8601String()
+      });
+      // set is used to write data. The key is up to you for naming convention
+      prefs.setString('userData', userData);
+      // End - Shared Preferences
     } catch (error) {
       throw error;
     }
+  }
+
+  // Auto login, used in Main.dart. Returns a boolean since it should reflect true = being successful logging in or false, failing to log in.
+  Future<bool> tryAutoLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    // If prefs doesn't contain the key 'userData', which we set above in _authenticate, then we know they haven't logged in
+    if (!prefs.containsKey('userData')) {
+      return false; // Exits future, returning false
+    }
+    // Now, since the above failed, and there is local storage wich has userData, we can retreive it. We convert it from a string to a map
+    final localUserData =
+        json.decode(prefs.getString('userData')) as Map<String, Object>;
+    // Now we check if expiration date is before the current time, meaning it has expired and is invalid to we break out, returning false.
+    final expiryDate = DateTime.parse(localUserData[
+        'expiryDate']); // We parse that iso string we stored to a real dateTime so we can check it below against DateTime.now
+    if (expiryDate.isBefore(DateTime.now())) {
+      return false; // Exits future, returning false
+    }
+    // Now that we've checked these possible invalid authentication states, we want to log the user in using all the data we stored in shared_prefernces above method, tapping into the Map variable we created above.
+    _token = localUserData['token'];
+    _expiryDate = expiryDate;
+    _userId = localUserData['userId'];
+    notifyListeners(); // Update UI
+    _autoLogout(); // Set autoLogout timer
+    return true; // Autologin succeeded, returning true to Future
   }
 
   // Sign up for user
@@ -70,11 +103,12 @@ class Auth with ChangeNotifier {
     return _authenticate(email, password, 'signUp');
   }
 
+  // Log in for user
   Future<void> login(String email, String password) async {
     return _authenticate(email, password, 'signInWithPassword');
   }
 
-  void logout() {
+  Future<void> logout() async {
     _token = null;
     _userId = null;
     _expiryDate = null;
@@ -83,6 +117,10 @@ class Auth with ChangeNotifier {
       _authTimer = null;
     }
     notifyListeners();
+    // Access the local storage to clear it so that it doesn't auto login successfully
+    final prefs = await SharedPreferences.getInstance();
+    // prefs.remove('userData'); // Good to use if you're storing multiple key/value data in local storage and want to target a specific set to remove
+    prefs.clear(); // Removes all local storage data
   }
 
   // Logs the user out after a certain amount of time. To use the timer feature we import dart:async above. Function is called when logged in to start the timer.

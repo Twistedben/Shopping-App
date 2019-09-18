@@ -48,6 +48,8 @@ class AppDrawer extends StatelessWidget {
             onTap: () {
               Navigator.of(context)
                   .pop(); // Prevents error from occuring conccerning drawer being open
+              Navigator.of(context).pushReplacementNamed(
+                  '/'); // Ensures that the Main.dart Home: auth logic is run when logging out.
               Provider.of<Auth>(context, listen: false).logout();
             },
           ),

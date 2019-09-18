@@ -9,6 +9,7 @@ import './screens/product_detail_screen.dart';
 import './screens/user_products_screen.dart';
 import './screens/edit_product_screen.dart';
 import './screens/auth_screen.dart';
+import './screens/splash_screen.dart';
 import './providers/products.dart';
 import './providers/cart.dart';
 import './providers/auth.dart';
@@ -58,7 +59,18 @@ class MyApp extends StatelessWidget {
             fontFamily: 'Lato',
           ),
           // Below - We check auth property passed by consumer, calling isAuth getter from auth.dart. If there is a token, therefor logged in, then show productsoverviewscreen, otherwise show authscreen so they can log in
-          home: auth.isAuth ? ProductsOverviewScreen() : AuthScreen(),
+          // If user logs in manually, show Products screen, if they have local storage loging data, try that to login whileshowing SplashScreen, otherwise show AuthScreen login.
+          home: auth.isAuth
+              ? ProductsOverviewScreen()
+              // We use a future builder to also check if the tryAutoLogin would work using local storage data to login
+              : FutureBuilder(
+                  future: auth.tryAutoLogin(),
+                  builder: (ctx, authResultSnapshot) =>
+                      authResultSnapshot.connectionState ==
+                              ConnectionState.waiting
+                          ? SplashScreen()
+                          : AuthScreen(),
+                ),
           routes: {
             ProductDetailScreen.routeName: (ctx) => ProductDetailScreen(),
             ProductsOverviewScreen.routeName: (ctx) => ProductsOverviewScreen(),
