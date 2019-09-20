@@ -30,9 +30,15 @@ class ProductItem extends StatelessWidget {
               arguments: product.id,
             );
           },
-          child: Image.network(
-            product.imageUrl,
-            fit: BoxFit.cover,
+          // The hero allows the image to grow naturally and fill into the new screen. Since we animate to the product_detail_screen, we have to put the corresponding code there as well.
+          child: Hero(
+            tag: product.id, // Identifies which image to shift over
+            // Allows a placeholder image, the png shirt image we have in assets, to be loaded in the meantime before the server is able to finish loading the server images smoothly.
+            child: FadeInImage(
+              placeholder: AssetImage('assets/images/product-placeholder.png'),
+              image: NetworkImage(product.imageUrl),
+              fit: BoxFit.cover,
+            ),
           ),
         ),
         footer: GridTileBar(
