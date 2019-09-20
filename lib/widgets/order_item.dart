@@ -20,10 +20,15 @@ class _OrderItemState extends State<OrderItem> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 300),
+      height: _expanded
+          ? min(widget.order.products.length * 20.0 + 110.0, 200)
+          : 95,
       margin: const EdgeInsets.all(10),
       child: Column(
         children: <Widget>[
+          Divider(),
           ListTile(
             title: Text('\$${widget.order.amount}'),
             subtitle: Text(
@@ -39,34 +44,37 @@ class _OrderItemState extends State<OrderItem> {
               },
             ),
           ),
-          if (_expanded)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
-              height: min(widget.order.products.length * 20.0 + 10.0, 100),
-              child: ListView(
-                children: widget.order.products
-                    .map((product) => Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: <Widget>[
-                            Text(
-                              product.title,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+          // if (_expanded) // If statement removed since we add animatedcontainer() below
+          AnimatedContainer(
+            duration: Duration(milliseconds: 300),
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
+            height: _expanded
+                ? min(widget.order.products.length * 20.0 + 10.0, 100)
+                : 0,
+            child: ListView(
+              children: widget.order.products
+                  .map((product) => Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          Text(
+                            product.title,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
-                            Text(
-                              '${product.quantity}x \$${product.price}',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.grey,
-                              ),
+                          ),
+                          Text(
+                            '${product.quantity}x \$${product.price}',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey,
                             ),
-                          ],
-                        ))
-                    .toList(),
-              ),
-            ) // Min calculates the smaller value and assigns that value as the height
+                          ),
+                        ],
+                      ))
+                  .toList(),
+            ),
+          ) // Min calculates the smaller value and assigns that value as the height
         ],
       ),
     );

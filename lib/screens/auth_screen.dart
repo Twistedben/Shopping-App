@@ -108,12 +108,12 @@ class _AuthCardState extends State<AuthCard>
   AnimationController _controller;
   // Animation<Size> // Used for AnimatedBUilder
   //     _heightAnimation; // Since Animation is dynamic, we have to provide what we intend to animate and in this case it's the height so we put size
-  AnimationController _controller;
   Animation<Offset> // Used for SlideTransition
       _slideAnimation;
   Animation<double>
       _opacityAnimation; // Allows animation for FadeTransition for password textfield
-  // Configures animation by assigning values to the two variables above
+
+  // Configures animation by assigning values to variables above
   @override
   void initState() {
     super.initState();

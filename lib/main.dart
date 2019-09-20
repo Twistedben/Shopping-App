@@ -13,6 +13,7 @@ import './screens/splash_screen.dart';
 import './providers/products.dart';
 import './providers/cart.dart';
 import './providers/auth.dart';
+import './helpers/custom_route.dart';
 
 void main() => runApp(MyApp());
 
@@ -54,10 +55,14 @@ class MyApp extends StatelessWidget {
         builder: (ctx, auth, _) => MaterialApp(
           title: 'Shop',
           theme: ThemeData(
-            primarySwatch: Colors.purple,
-            accentColor: Colors.deepOrange,
-            fontFamily: 'Lato',
-          ),
+              primarySwatch: Colors.purple,
+              accentColor: Colors.deepOrange,
+              fontFamily: 'Lato',
+              // Allows custom page transitions across the app
+              pageTransitionsTheme: PageTransitionsTheme(builders: {
+                TargetPlatform.android: CustomPageTransitionBuilder(),
+                TargetPlatform.iOS: CustomPageTransitionBuilder(),
+              })),
           // Below - We check auth property passed by consumer, calling isAuth getter from auth.dart. If there is a token, therefor logged in, then show productsoverviewscreen, otherwise show authscreen so they can log in
           // If user logs in manually, show Products screen, if they have local storage loging data, try that to login whileshowing SplashScreen, otherwise show AuthScreen login.
           home: auth.isAuth

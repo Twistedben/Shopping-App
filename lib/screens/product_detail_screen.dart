@@ -33,6 +33,7 @@ class ProductDetailScreen extends StatelessWidget {
           SliverAppBar(
             expandedHeight: 300, // Height for appbar and not the image
             pinned: true, // Remain visible
+            
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 loadedProduct.title,
