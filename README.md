@@ -4,16 +4,16 @@ A Shopping mobile app built in Dart and Flutter, connected to Firebase.
 
 ## Tech/Features
 
-Multiple navigation of screens inside a mobile app.
-A drawer side panel screen, with snackbars and dialogue prompts.
-Custom animated screen navigation, with enhanced animation across app.
-Authentication (Email account creation and login) and Authorization, scoped user products, as well as a marketplace for all users.
-Manual success and error handling, using Futures and Try, inside forms and Firebase API.
-Favoriting and filtering. 
-Shopping cart feature with order tracking.
-Stateful managment, database connection, dynamic navigation, and loading screens during async processes. 
-Local storage for authentication auto-logging, using Shared_Preferences.
-Full CRUD of products.
+-   Multiple navigation of screens inside a mobile app.
+-   A drawer side panel screen, with snackbars and dialogue prompts.
+-   Custom animated screen navigation, with enhanced animation across app.
+-   Authentication (Email account creation and login) and Authorization, scoped user products, as well as a marketplace for all users.
+-   Manual success and error handling, using Futures and Try, inside forms and Firebase API.
+-   Favoriting and filtering. 
+-   Shopping cart feature with order tracking.
+-   Stateful managment, database connection, dynamic navigation, and loading screens during async processes. 
+-   Local storage for authentication auto-logging, using Shared_Preferences.
+-   Full CRUD of products.
 
 ### Description
 
